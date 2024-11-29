@@ -1,5 +1,12 @@
-import { motion, useScroll } from "motion/react";
-import { useEffect } from "react";
+import { delay } from "motion";
+import {
+  motion,
+  useAnimation,
+  useInView,
+  useScroll,
+  useTransform,
+} from "motion/react";
+import { useEffect, useRef } from "react";
 
 const gridContainerVariants = {
   hidden: { opacity: 0 },
@@ -31,6 +38,31 @@ const svgIconVariants = {
 
 function App() {
   const { scrollYProgress: completionProgress } = useScroll();
+  const containerRef = useRef(null);
+  const isInView = useInView(containerRef, { once: true });
+  const mainControls = useAnimation();
+  const { scrollYProgress } = useScroll({
+    target: containerRef,
+    offset: ["start end", "end end"],
+  });
+
+  const paragraphOneValue = useTransform(
+    scrollYProgress,
+    [0, 1],
+    ["-100%", "0%"]
+  );
+
+  const paragraphTwoValue = useTransform(
+    scrollYProgress,
+    [0, 1],
+    ["100%", "0%"]
+  );
+
+  useEffect(() => {
+    if (isInView) {
+      mainControls.start("visible");
+    }
+  }, [isInView]);
 
   return (
     <div className="flex flex-col gap-10 overflow-x-hidden">
@@ -128,10 +160,63 @@ function App() {
             <motion.path
               d="m3.75 13.5 10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75Z"
               variants={svgIconVariants}
+              initial="hidden"
+              animate="visible"
+              transition={{
+                default: {
+                  duration: 2,
+                  ease: "easeInOut",
+                  delay: 1,
+                  repeat: Infinity,
+                },
+                fill: {
+                  duration: 2,
+                  ease: "easeIn",
+                  delay: 2,
+                  repeat: Infinity,
+                  repeatType: "reverse",
+                  repeatDelay: 1,
+                },
+              }}
             ></motion.path>
           </motion.svg>
         </motion.div>
       </motion.section>
+      <section className="flex flex-col gap-10 mb-10" ref={containerRef}>
+        <motion.h1
+          className="text-5xl tracking-wide text-center text-slate-100"
+          animate={mainControls}
+          initial="hidden"
+          variants={{
+            hidden: { opacity: 0, y: 75 },
+            visible: {
+              opacity: 1,
+              y: 0,
+            },
+          }}
+          transition={{ delay: 0.3 }}
+        >
+          Keep Scrolling
+        </motion.h1>
+        <motion.p
+          className="w-1/2 mx-auto text-4xl font-thin text-slate-100"
+          style={{ translateX: paragraphOneValue }}
+        >
+          Lorem ipsum, dolor sit amet consectetur adipisicing elit. Cumque
+          corporis, optio neque aspernatur aperiam temporibus iure iusto itaque
+          quos recusandae dolores eos, sunt aliquam nesciunt praesentium nam
+          autem consequuntur dolor!
+        </motion.p>
+        <motion.p
+          className="w-1/2 mx-auto text-4xl font-thin text-slate-100"
+          style={{ translateX: paragraphTwoValue }}
+        >
+          Lorem ipsum dolor sit amet consectetur adipisicing elit. Minima,
+          voluptatibus. Nemo nisi distinctio a commodi odio suscipit voluptate
+          minima dolorem sunt ratione repudiandae ullam, obcaecati rem maxime
+          alias? Sapiente, adipisci?
+        </motion.p>
+      </section>
     </div>
   );
 }
